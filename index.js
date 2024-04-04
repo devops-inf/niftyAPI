@@ -7,7 +7,6 @@ const authRouter = require('./routes/auth');
 const dbconnection = require('./DB/pgConnection');
 const bodyParser =  require('body-parser');
 
-
 const app = express();
 const PORT = process.env.PORT;
 
