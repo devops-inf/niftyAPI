@@ -25,7 +25,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 //app.use(cors);
 
-const dataRouter = require('./routes/data');
+const dataRouter = require('./routes/project');
 
 app.post('/', (req, res) => {
   res.send('Test');
@@ -34,6 +34,9 @@ app.post('/', (req, res) => {
 // Routes
 app.use('/auth', authRouter);
 app.use('/api', dataRouter);
+app.use('/api', require('./routes/portfolio'));
+app.use('/api', require('./routes/tasks'));
+app.use('/api', require('./routes/members'));
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

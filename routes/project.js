@@ -7,21 +7,16 @@ const client = require('../DB/pgConnection');
 
 const router = express.Router();
 
-router.get('/data',/* authenticate,*/ async (req, res) => {
+router.get('/project', async (req, res) => {
 
   try {
-    // Ensure that the user is authenticated
-    // if (!req.user) {
-    //   return res.status(401).json({ message: 'Unauthorized' });
-    // }
-
-    // Assuming the Nifty API endpoint for fetching data
+    // ANifty API endpoint for fetching data
     const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/projects';
 
     // Get the token from the session
     const token = process.env.ACCESS_TOKEN;
 
-    // Make a GET request to the Nifty API
+    //GET request to the Nifty API
     const res = await axios.get(niftyApiUrl, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -54,13 +49,13 @@ router.get('/data',/* authenticate,*/ async (req, res) => {
 
       // Iterate over each project and insert data
       for (const project of res.data.projects) {
-        const { id, nice_id, name, description, initials, archived, owner, members } = project;
+        const { id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points } = project;
         
         // Convert members array to JSON string
         const membersJson = JSON.stringify(members);
         
-        const query = 'INSERT INTO projects (id, nice_id, name, description, initials, archived, owner, members) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
-        const values = [id, nice_id, name, description, initials, archived, owner, membersJson];
+        const query = 'INSERT INTO projects (id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
+        const values = [id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points];
         await client.query(query, values);
       }
       console.log('Data inserted successfully.');
@@ -72,45 +67,6 @@ router.get('/data',/* authenticate,*/ async (req, res) => {
       }
       await pool.end();
     }
-  }
-});
-
-    
-
-//     // Respond with the retrieved data
-//     res.json(niftyData);
-//   } catch (error) {
-//     // Handle errors
-//     console.error('Error retrieving data from Nifty:', error);
-//     res.status(500).json({ message: 'Internal server error' });
-//   }
-// });
-
-router.get('/portfolio',/* authenticate,*/ async (req, res) => {
-  try {
-
-    // Assuming the Nifty API endpoint for fetching data
-    const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/subteams';
-
-    // Get the token from the session
-    const token = process.env.ACCESS_TOKEN;
-
-    // Make a GET request to the Nifty API
-    const response = await axios.get(niftyApiUrl, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    // Process the response from the Nifty API
-    const niftyData = response.data;
-
-    // Respond with the retrieved data
-    res.json(niftyData);
-  } catch (error) {
-    // Handle errors
-    console.error('Error retrieving data from Nifty:', error);
-    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
