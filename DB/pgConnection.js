@@ -1,22 +1,22 @@
-const {Client} = require('pg')
+const pg = require('pg');
 
-const client = new Client({
-    host: "localhost",
-    user: "postgres",
-    port: 5432,
-    password: "12345678",
-    database: "niftydb"
-})
+const connectionString = "postgresql://postgres:12345678@192.168.88.93:12321/niftydb";
 
-client.connect();
+const client = new pg.Client({
+    connectionString: connectionString,
+    acquireConnectionTimeout: 5000
+});
 
-// client.query('Select * from projects', (err, res)=>{
-//     if (!err) {
-//         console.log(res.rows)
-//     } else {
-//         console.log(res.message)
-//     }
-//     client.end;
-// })
+client.connect((err) => {
+    if (err) {
+        console.error('Error connecting to PostgreSQL:', err);
+    } else {
+        console.log('Connected to PostgreSQL!');
+    }
+});
+
+client.on('error', (err) => {
+    console.error('Error during PostgreSQL client connection:', err);
+});
 
 module.exports = client;
