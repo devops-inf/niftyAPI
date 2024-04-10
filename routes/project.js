@@ -6,7 +6,7 @@ const pool = require('../DB/pgConnection');
 const client = require('../DB/pgConnection');
 const router = express.Router();
 
-router.get('/project', async (req, response) => {
+router.get('/project', async (req, res) => {
   try {
     // ANifty API endpoint for fetching data
     const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/projects';
@@ -29,10 +29,10 @@ router.get('/project', async (req, response) => {
     const niftyData = res.data;
 
     // Insert project data into the database
-    await insertProjects(res);
+    //await insertProjects(res);
     
     // Respond with the retrieved data
-    response.json(niftyData);
+    res.json(niftyData);
 
   } catch (error) {
       // Handle errors
@@ -40,32 +40,32 @@ router.get('/project', async (req, response) => {
       res.status(500).json({ message: 'Internal server error' });
     }
  
-  // Function to insert project data into the database
-  async function insertProjects(res) {
+  // // Function to insert project data into the database
+  // async function insertProjects(res) {
  
-    try {
+  //   try {
 
-      // Iterate over each project and insert data
-      for (const project of res.data.projects) {
-        const { id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points } = project;
+  //     // Iterate over each project and insert data
+  //     for (const project of res.data.projects) {
+  //       const { id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points } = project;
         
-        // Convert members array to JSON string
-        const membersJson = JSON.stringify(members);
+  //       // Convert members array to JSON string
+  //       const membersJson = JSON.stringify(members);
         
-        const query = 'INSERT INTO projects (id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
-        const values = [id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points];
-        await client.query(query, values);
-      }
-      console.log('Data inserted successfully.');
-    } catch (err) {
-      console.error('Error inserting data:', err);
-    } finally {
-      if (client) {
-          //client.release();
-      }
-      await pool.end();
-    }
-  }
+  //       const query = 'INSERT INTO projects (id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
+  //       const values = [id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points];
+  //       await client.query(query, values);
+  //     }
+  //     console.log('Data inserted successfully.');
+  //   } catch (err) {
+  //     console.error('Error inserting data:', err);
+  //   } finally {
+  //     if (client) {
+  //         //client.release();
+  //     }
+  //     await pool.end();
+  //   }
+  //}
 });
 
 module.exports = router;

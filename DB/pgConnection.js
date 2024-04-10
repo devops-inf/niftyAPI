@@ -17,18 +17,18 @@ client.connect((err) => {
     }
 });
 
-client.query('SELECT NOW()', (err, result) => {
-    if (err) {
-        console.error('Error executing query:', err);
-    } else {
-        console.log('Query result:', result.rows);
-    }
+// client.query('SELECT NOW()', (err, result) => {
+//     if (err) {
+//         console.error('Error executing query:', err);
+//     } else {
+//         console.log('Query result:', result.rows);
+//     }
 
-    // Close the client connection
-    client.end();
-});
-client.on('error', (err) => {
-    console.error('Error during PostgreSQL client connection:', err);
-});
+//     // Close the client connection
+//     client.end();
+// });
+// client.on('error', (err) => {
+//     console.error('Error during PostgreSQL client connection:', err);
+// });
 
 module.exports = client;

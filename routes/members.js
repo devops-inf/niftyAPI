@@ -27,12 +27,43 @@ router.get('/member', async (req, res) => {
       // Process the response from the Nifty API
       const niftyData = response.data;
   
-      // Respond with the retrieved data
-      res.json(niftyData);
+      // Check if the niftyData object contains the expected structure
+      if (niftyData && Array.isArray(niftyData)) {
+        // Insert project data into the database
+        await insertMembers(niftyData, res);
+        // Respond with the retrieved data
+        res.json(niftyData);
+      } else {
+        console.error('Error: Invalid data format from Nifty');
+        res.status(500).json({ message: 'Invalid data format from Nifty' });
+      }
     } catch (error) {
       // Handle errors
       console.error('Error retrieving data from Nifty:', error);
       res.status(500).json({ message: 'Internal server error' });
+    }
+
+    async function insertMembers(niftyData, res){
+      try {
+        //iterate over each task and insert data
+        
+        for (const member of niftyData) {
+          const { id, user_id, email, name, initials, team, role, total_story_points, completed_story_points} = member;
+
+          //Query
+          const query = 'INSERT INTO members (id, user_id, email, name, initials, team, role, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)';
+          const values = [id, user_id, email, name, initials, team, role, total_story_points, completed_story_points];
+          await client.query(query, values);
+          
+        }
+      }catch (error) {
+        console.error('Error inserting data:', error)
+      }finally {
+        if (client) {
+            //client.release();
+        }
+        await pool.end();
+      }
     }
   });
   
