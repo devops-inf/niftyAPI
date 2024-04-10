@@ -4,16 +4,14 @@ const authenticate = require('../middleware/authenticate');
 const axios = require('axios');
 const pool = require('../DB/pgConnection');
 const client = require('../DB/pgConnection');
-
 const router = express.Router();
 
-router.get('/project', async (req, res) => {
-
+router.get('/project', async (req, response) => {
   try {
     // ANifty API endpoint for fetching data
     const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/projects';
 
-    // Get the token from the session
+    // token from the session
     const token = process.env.ACCESS_TOKEN;
 
     //GET request to the Nifty API
@@ -23,24 +21,24 @@ router.get('/project', async (req, res) => {
       }
     });
 
-    // Check if response data contains projects
+    // Checks if response data contains projects
     if (!res.data || !res.data.projects || !Array.isArray(res.data.projects)) {
       throw new Error('Invalid response data format');
     }
     // Process the response from the Nifty API
-    let niftyData = res.data;
+    const niftyData = res.data;
 
     // Insert project data into the database
     await insertProjects(res);
     
     // Respond with the retrieved data
-    res.json({niftyData});
+    response.json(niftyData);
 
-      } catch (error) {
-    // Handle errors
-    console.error('Error retrieving and inserting data:', error);
-    res.status(500).json({ message: 'Internal server error' });
-  }
+  } catch (error) {
+      // Handle errors
+      console.error('Error retrieving and inserting data:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
  
   // Function to insert project data into the database
   async function insertProjects(res) {

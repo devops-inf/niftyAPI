@@ -8,7 +8,6 @@ const router = express.Router();
 
 router.get('/task',/* authenticate,*/ async (req, res) => {
     try {
-  
       // Assuming the Nifty API endpoint for fetching data
       const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/tasks';
   

@@ -1,6 +1,6 @@
 const pg = require('pg');
 
-const connectionString = "postgresql://kbdb:kaybee@192.168.88.93:5432/niftydb";
+const connectionString = "postgres://kbdb:kaybee@192.168.88.93:5432/niftydb";
 
 const client = new pg.Client({
     connectionString: connectionString,
@@ -9,12 +9,24 @@ const client = new pg.Client({
 
 client.connect((err) => {
     if (err) {
-        console.error('Error connecting to PostgreSQL:', err);
+        console.log('Error connecting to PostgreSQL:', err);
     } else {
         console.log('Connected to PostgreSQL!');
+
+        
     }
 });
 
+client.query('SELECT NOW()', (err, result) => {
+    if (err) {
+        console.error('Error executing query:', err);
+    } else {
+        console.log('Query result:', result.rows);
+    }
+
+    // Close the client connection
+    client.end();
+});
 client.on('error', (err) => {
     console.error('Error during PostgreSQL client connection:', err);
 });
