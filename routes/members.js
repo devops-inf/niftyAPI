@@ -43,28 +43,28 @@ router.get('/member', async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
 
-    async function insertMembers(niftyData, res){
-      try {
-        //iterate over each task and insert data
+    // async function insertMembers(niftyData, res){
+    //   try {
+    //     //iterate over each task and insert data
         
-        for (const member of niftyData) {
-          const { id, user_id, email, name, initials, team, role, total_story_points, completed_story_points} = member;
+    //     for (const member of niftyData) {
+    //       const { id, user_id, email, name, initials, team, role, total_story_points, completed_story_points} = member;
 
-          //Query
-          const query = 'INSERT INTO members (id, user_id, email, name, initials, team, role, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)';
-          const values = [id, user_id, email, name, initials, team, role, total_story_points, completed_story_points];
-          await client.query(query, values);
+    //       //Query
+    //       const query = 'INSERT INTO members (id, user_id, email, name, initials, team, role, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)';
+    //       const values = [id, user_id, email, name, initials, team, role, total_story_points, completed_story_points];
+    //       await client.query(query, values);
           
-        }
-      }catch (error) {
-        console.error('Error inserting data:', error)
-      }finally {
-        if (client) {
-            //client.release();
-        }
-        await pool.end();
-      }
-    }
+    //     }
+    //   }catch (error) {
+    //     console.error('Error inserting data:', error)
+    //   }finally {
+    //     if (client) {
+    //         //client.release();
+    //     }
+    //     await pool.end();
+    //   }
+    // }
   });
   
   module.exports = router;

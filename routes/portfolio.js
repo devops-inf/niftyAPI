@@ -6,7 +6,7 @@ const pool = require('../DB/pgConnection');
 const client = require('../DB/pgConnection');
 const router = express.Router();
 
-router.get('/portfolio',/* authenticate,*/ async (req, res) => {
+router.get('/portfolio', async (req, res) => {
     try {
   
       // Assuming the Nifty API endpoint for fetching data
@@ -21,16 +21,43 @@ router.get('/portfolio',/* authenticate,*/ async (req, res) => {
           'Authorization': `Bearer ${token}`
         }
       });
-  
+      console.log(response.data)
+      // Check if the response contains data
+      if (!response.data || !response.data.subteams || !Array.isArray(response.data.subteams)) {
+        throw new Error('Response data is not in the expected format');
+      }
       // Process the response from the Nifty API
-      const niftyData = response.data;
-  
+      const niftyData = response.data.subteams;
+      
+      // Insert project data into the database
+      await insertPortfolio(niftyData);
+
       // Respond with the retrieved data
       res.json(niftyData);
     } catch (error) {
       // Handle errors
       console.error('Error retrieving data from Nifty:', error);
       res.status(500).json({ message: 'Internal server error' });
+    }
+
+    async function insertPortfolio(niftyData){
+      try {
+        //Iterate data 
+        for (const subteams of niftyData) {
+          const { id, name, initials, owner, members} = subteams;
+
+          // Convert members array to JSON string
+          const membersJson = JSON.stringify(members);
+        
+          //Query
+          const query = 'INSERT INTO portfolios (id, name, initials, owner, members) VALUES ($1, $2, $3, $4, $5)'
+          const values = [id, name, initials, owner, membersJson];
+          await client.query(query, values);
+
+        }
+      } catch (error) {
+        console.error('Error inserting data: ', error);
+      }
     }
   });
   
