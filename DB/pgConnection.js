@@ -1,6 +1,6 @@
 const pg = require('pg');
 
-const connectionString = "postgresql://kbdb:kaybee@192.168.88.93:12321/niftydb";
+const connectionString = "postgresql://kbdb:kaybee@192.168.88.93:5432/niftydb";
 
 const client = new pg.Client({
     connectionString: connectionString,
