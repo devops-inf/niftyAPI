@@ -53,9 +53,19 @@ router.get('/project', async (req, res) => {
         // Convert members array to JSON string
         const membersJson = JSON.stringify(members);
         
-        const query = 'INSERT INTO projects (id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
-        const values = [id, nice_id, name, description, initials, owner, membersJson, progress, email, total_story_points, completed_story_points];
-        await client.query(query, values);
+        // Check if the project already exists
+        const existingProject = await client.query('SELECT * FROM projects WHERE id = $1', [id]);
+
+        if (existingProject.rows.length === 0) {
+            // Project does not exist, insert it into the database
+            const query = 'INSERT INTO projects (id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
+            const values = [id, nice_id, name, description, initials, owner, membersJson, progress, email, total_story_points, completed_story_points];
+            await client.query(query, values);
+            console.log(`Project ${id} inserted successfully.`);
+        } else {
+            // Project already exists, you can choose to update or skip it
+            console.log(`Project ${id} already exists.`);
+        }
       }
       console.log('Data inserted successfully.');
     } catch (err) {

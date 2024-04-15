@@ -52,10 +52,21 @@ router.get('/task',/* authenticate,*/ async (req, res) => {
           const assigneesJson = JSON.stringify(assignees);
           const subscribersJson = JSON.stringify(subscribers);
 
+          // Check if the portfolio already exists
+          const existingTasks = await client.query('SELECT * FROM tasks WHERE id = $1', [id]);
+          
+          if (existingTasks.rows.length === 0) {
+            // Task does not exist, insert it into the database
+            const query = 'INSERT INTO tasks (id, created_at, nice_id, name, completed, project, assignees, subscribers, total_subtasks, completed_subtasks, created_by, description, due_date, start_date, milestone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)'
+            const values = [id, created_at, nice_id, name, completed, project, assigneesJson, subscribersJson, total_subtasks, completed_subtasks, created_by, description, due_date, start_date, milestone];
+            await client.query(query, values);
+            console.log(`Task ${id} inserted successfully.`);
+          } else {
+            // Task already exists, you can choose to update or skip it
+            console.log(`Task ${id} already exists.`);
+          }
           //Query
-          const query = 'INSERT INTO tasks (id, created_at, nice_id, name, completed, project, assignees, subscribers, total_subtasks, completed_subtasks, created_by, description, due_date, start_date, milestone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)'
-          const values = [id, created_at, nice_id, name, completed, project, assigneesJson, subscribersJson, total_subtasks, completed_subtasks, created_by, description, due_date, start_date, milestone];
-          await client.query(query, values);
+          
 
         }
       } catch (error) {

@@ -48,11 +48,20 @@ router.get('/portfolio', async (req, res) => {
 
           // Convert members array to JSON string
           const membersJson = JSON.stringify(members);
+
+          // Check if the portfolio already exists
+          const existingPortfolio = await client.query('SELECT * FROM portfolios WHERE id = $1', [id]);
         
-          //Query
-          const query = 'INSERT INTO portfolios (id, name, initials, owner, members) VALUES ($1, $2, $3, $4, $5)'
-          const values = [id, name, initials, owner, membersJson];
-          await client.query(query, values);
+          if (existingPortfolio.rows.length === 0) {
+            // Portfolio does not exist, insert it into the database
+            const query = 'INSERT INTO portfolios (id, name, initials, owner, members) VALUES ($1, $2, $3, $4, $5)';
+            const values = [id, name, initials, owner, membersJson];
+            await client.query(query, values);
+            console.log(`Portfolio ${id} inserted successfully.`);
+          } else {
+              // Portfolio already exists, you can choose to update or skip it
+              console.log(`Portfolio ${id} already exists.`);
+          }
 
         }
       } catch (error) {
