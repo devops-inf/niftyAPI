@@ -23,7 +23,6 @@ app.use(session({
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
-//app.use(cors);
 
 const dataRouter = require('./routes/project');
 
@@ -37,6 +36,9 @@ app.use('/api', dataRouter);
 app.use('/api', require('./routes/portfolio'));
 app.use('/api', require('./routes/tasks'));
 app.use('/api', require('./routes/members'));
+app.use('/api', require('./routes/file'));
+app.use('/api', require('./routes/message'));
+app.use('/api', require('./routes/milestone'));
 
 
 app.listen(PORT, () => {
