@@ -3,9 +3,10 @@ const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 
-const authRouter = require('./routes/auth');
 const dbconnection = require('./DB/pgConnection');
 const bodyParser =  require('body-parser');
+
+const authRouter = require('./routes/auth');
 
 const app = express();
 const PORT = process.env.PORT;
@@ -39,7 +40,8 @@ app.use('/api', require('./routes/members'));
 app.use('/api', require('./routes/file'));
 app.use('/api', require('./routes/message'));
 app.use('/api', require('./routes/milestone'));
-
+app.use('/api', require('./routes/status'));
+app.use('/api', require('./routes/document'));
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

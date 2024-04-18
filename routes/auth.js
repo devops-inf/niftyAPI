@@ -2,6 +2,8 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const base64 = require('base-64');
+const fs = require('fs');
+const dotenv = require('dotenv');
 
 if (process.env.NODE_ENV !== "production") {
     require("dotenv").config();
@@ -9,39 +11,27 @@ if (process.env.NODE_ENV !== "production") {
 
 const router = express.Router();
 
-// Route for handling the initial login request
-router.post('/login', (req, res) => {
-    // Hardcoded user credentials (for demo purposes)
-    let clientIdd = process.env.EMAIL;
-    let passwordd =  process.env.PASSWORD;
+// Define your OAuth provider's authorization endpoint URL
+const authorizationEndpoint = process.env.AUTH_URL;
 
-    // Check if the provided credentials match
-    if (req.body.clientId === clientIdd && req.body.password === passwordd) {
-        // Generate a JWT token
-        id = process.env.CLIENT_ID
-        const token = jwt.sign({ clientIdd }, process.env.APP_SECRET, { expiresIn: '10m' });
-        const refreshToken = jwt.sign({ clientIdd }, process.env.APP_SECRET, { expiresIn: '14d' });
+// Route handler to initiate the OAuth authorization flow
+router.get('/authorize', (req, res) => {
 
-        // Set the session token
-        req.session.token = token;
-        req.session.refresh_token = refreshToken;
 
-        console.log(req.session)
-        
+    // Redirect the user's browser to the authorization URL
+    res.redirect(authorizationEndpoint);   
 
-        // Redirect the user to the OAuth provider's authorization endpoint
-        res.redirect('https://nifty.pm/authorize?response_type=code&client_id=waXB7jdXLIzD16tTDTdUsl1r307ApcUF&redirect_uri=https://infinitybrandsza.nifty.pm/&scope=file,doc,message,project,task,member,label,milestone,subtask,task_group,subteam,time_tracking');
-    
-    } else {
-        res.status(401).json({ message: 'Invalid credentials' });
-        console.log("Invalid credentials");
-    }
 });
+
+// Middleware to parse query parameters
+router.use(express.urlencoded({ extended: true }));
 
 // Route for handling the callback from the OAuth provider
 router.get('/callback', (req, res) => {
+
     // Extract the authorization code from the query parameters
-    const authorizationCode = process.env.AUTH_CODE;
+    //const authorizationCode = process.env.AUTH_CODE;
+    const authorizationCode = req.query.code;
 
     // Encode Client ID and Client Secret in Base64
     const credentials = `${process.env.CLIENT_ID}:${process.env.APP_SECRET}`;
@@ -53,7 +43,7 @@ router.get('/callback', (req, res) => {
         code: authorizationCode,
         refresh_token: "string",
         grant_type: 'authorization_code',
-        redirect_uri: `https://infinitybrandsza.nifty.pm`
+        redirect_uri: `https://niftypm.com`
     };
     
 
@@ -69,6 +59,15 @@ router.get('/callback', (req, res) => {
             console.log('Response:', response.data);
             // Send the access token in the response
             res.json({ access_token: response.data.access_token });
+
+            // Load the .env file
+            const envConfig = dotenv.parse(fs.readFileSync('.env'));
+
+            // Modify the access token value
+            envConfig.ACCESS_TOKEN = response.data.access_token;
+
+            // Write the modified config back to the .env file
+            fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
         })
         .catch(error => {
             console.error('Error:', error);

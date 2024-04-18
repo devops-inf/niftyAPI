@@ -6,10 +6,10 @@ const pool = require('../DB/pgConnection');
 const client = require('../DB/pgConnection');
 const router = express.Router();
 
-router.get('/project', async (req, res) => {
+router.get('/document', async (req, res) => {
   try {
     // ANifty API endpoint for fetching data
-    const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/projects';
+    const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/docs';
 
     // token from the session
     const token = process.env.ACCESS_TOKEN;
@@ -22,15 +22,15 @@ router.get('/project', async (req, res) => {
     });
 
     // Checks if response data contains projects
-    if (!response.data || !response.data.projects || !Array.isArray(response.data.projects)) {
+    if (!response.data || !response.data.items || !Array.isArray(response.data.items)) {
       throw new Error('Invalid response data format');
     }
     
     // Process the response from the Nifty API
     const niftyData = response.data;
 
-    //A call function to Insert project data into the database
-    await insertProjects(niftyData, response);
+    // A call function to Insert project data into the database
+    await insertDocs(niftyData, response);
     
     // Respond with the retrieved data
     res.json(niftyData);
@@ -42,29 +42,30 @@ router.get('/project', async (req, res) => {
     }
  
   // Function to insert project data into the database
-  async function insertProjects(niftyData, res) {
+  async function insertDocs(niftyData, res) {
  
     try {
 
       // Iterate over each project and insert data
-      for (const projects of niftyData.projects) {
-        const { id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points } = projects;
+      for (const doc of niftyData.projects) {
+        const { id, name, access_type, type, subtype, external_id, author, project_id, tasks, members, created_at, hasAccess } = doc;
         
         // Convert members array to JSON string
+        const taskJson = JSON.stringify(tasks);
         const membersJson = JSON.stringify(members);
         
         // Check if the project already exists
-        const existingProject = await client.query('SELECT * FROM projects WHERE id = $1', [id]);
+        const existingProject = await client.query('SELECT * FROM documents WHERE id = $1', [id]);
 
         if (existingProject.rows.length === 0) {
             // Project does not exist, insert it into the database
-            const query = 'INSERT INTO projects (id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
-            const values = [id, nice_id, name, description, initials, owner, membersJson, progress, email, total_story_points, completed_story_points];
+            const query = 'INSERT INTO documents (id, name, access_type, type, subtype, external_id, author, project_id, tasks, members, created_at, hasAccess) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)';
+            const values = [id, name, access_type, type, subtype, external_id, author, project_id, taskJson, membersJson, created_at, hasAccess ];
             await client.query(query, values);
-            console.log(`Project ${id} inserted successfully.`);
+            console.log(`Document ${id} inserted successfully.`);
         } else {
             // Project already exists, you can choose to update or skip it
-            console.log(`Project ${id} already exists.`);
+            console.log(`Document ${id} already exists.`);
         }
       }
       console.log('Data inserted successfully.');

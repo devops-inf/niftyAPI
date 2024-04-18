@@ -28,7 +28,7 @@ router.get('/message', async (req, res) => {
       // Process the response from the Nifty API
       const niftyData = response.data.messages;
 
-      // Insert project data into the database
+      //A call function to Insert project data into the database
       await insertMessages(niftyData);
 
       // Respond with the retrieved data

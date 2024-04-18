@@ -21,7 +21,7 @@ router.get('/portfolio', async (req, res) => {
           'Authorization': `Bearer ${token}`
         }
       });
-      console.log(response.data)
+      
       // Check if the response contains data
       if (!response.data || !response.data.subteams || !Array.isArray(response.data.subteams)) {
         throw new Error('Response data is not in the expected format');
@@ -29,7 +29,7 @@ router.get('/portfolio', async (req, res) => {
       // Process the response from the Nifty API
       const niftyData = response.data.subteams;
       
-      // Insert project data into the database
+      //A call function to Insert project data into the database
       await insertPortfolio(niftyData);
 
       // Respond with the retrieved data

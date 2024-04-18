@@ -6,10 +6,10 @@ const pool = require('../DB/pgConnection');
 const client = require('../DB/pgConnection');
 const router = express.Router();
 
-router.get('/milestone', async (req, res) => {
+router.get('/status', async (req, res) => {
     try {
       // Assuming the Nifty API endpoint for fetching data
-      const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/milestones?project_id=D8Q58hbe_fWw';
+      const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/taskgroups';
   
       // Get the token from the session
       const token = process.env.ACCESS_TOKEN;
@@ -22,14 +22,14 @@ router.get('/milestone', async (req, res) => {
       });
 
       // Check if the response contains data
-      if (!response.data || !response.data.items || !Array.isArray(response.data.items)) {
+      if (!response.data || !response.data.files || !Array.isArray(response.data.items)) {
         throw new Error('Response data is not in the expected format');
       }
       // Process the response from the Nifty API
       const niftyData = response.data.items;
 
       //A call function to Insert project data into the database
-      await insertMilestones(niftyData);
+      await insertStatus(niftyData);
 
       // Respond with the retrieved data
       res.json(niftyData);
@@ -41,28 +41,27 @@ router.get('/milestone', async (req, res) => {
     }
 
     //Inserting data into the database
-    async function insertMilestones(niftyData){
+    async function insertStatus(niftyData){
       try {
         //iterate over each task and insert data
-        for (const milestone of niftyData) {
-          const { id, name, created_at, created_by, description, dependency, start, end, archived, project, task_group, rule, tasks, assignees} = milestone;
+        for (const status of niftyData) {
+          const { id, name, order, project_id, milestone, is_completion_group, assignees} = status;
 
           //convert array to JSON string
-          const tasksJson = JSON.stringify(tasks);
           const assigneesJson = JSON.stringify(assignees);
-          
+
           // Check if the portfolio already exists
-          const existingMilestone = await client.query('SELECT * FROM milestones WHERE id = $1', [id]);
+          const existingFile = await client.query('SELECT * FROM statuses WHERE id = $1', [id]);
           
-          if (existingMilestone.rows.length === 0) {
+          if (existingFile.rows.length === 0) {
             // Task does not exist, insert it into the database
-            const query = 'INSERT INTO milestones (id, name, created_at, created_by, description, dependency, start, end, archived, project, task_group, rule, tasks, assignees) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)'
-            const values = [id, name, created_at, created_by, description, dependency, start, end, archived, project, task_group, rule, tasksJson, assigneesJson];
+            const query = 'INSERT INTO statuses (id, name, order, project_id, milestone, is_completion_group, assignees) VALUES ($1, $2, $3, $4, $5, $6, $7)'
+            const values = [id, name, order, project_id, milestone, is_completion_group, assigneesJson];
             await client.query(query, values);
-            console.log(`Milestone ${id} inserted successfully.`);
+            console.log(`Status ${id} inserted successfully.`);
           } else {
             // Task already exists, (Add an update query here --Next task)
-            console.log(`Milestone ${id} already exists.`);
+            console.log(`Status ${id} already exists.`);
           }
           
         }
