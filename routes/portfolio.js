@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/portfolio', async (req, res) => {
     try {
   
-      // Assuming the Nifty API endpoint for fetching data
+      // Nifty API endpoint for fetching data
       const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/subteams';
   
       // Get the token from the session
@@ -59,10 +59,12 @@ router.get('/portfolio', async (req, res) => {
             await client.query(query, values);
             console.log(`Portfolio ${id} inserted successfully.`);
           } else {
-              // Portfolio already exists, you can choose to update or skip it
-              console.log(`Portfolio ${id} already exists.`);
+              // Portfolio already exists, update it
+              const updateQuery = 'UPDATE portfolios SET name = $1, initials = $2, owner = $3, members = $4 WHERE id = $5';
+              const updateValues = [name, initials, owner, membersJson, id];
+              await client.query(updateQuery, updateValues);
+              console.log(`Portfolio ${id} updated successfully.`);
           }
-
         }
       } catch (error) {
         console.error('Error inserting data: ', error);
