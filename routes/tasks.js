@@ -8,20 +8,18 @@ const router = express.Router();
 
 router.get('/task',/* authenticate,*/ async (req, res) => {
     try {
-      // Assuming the Nifty API endpoint for fetching data
+      // Nifty API endpoint for fetching data
       const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/tasks';
   
       // Get the token from the session
       const token = process.env.ACCESS_TOKEN;
   
-      // Make a GET request to the Nifty API
+      //GET request to the Nifty API
       const response = await axios.get(niftyApiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
-      //console.log("Response Data: ",response.data);
 
       // Check if the response contains data
       if (!response.data || !response.data.tasks || !Array.isArray(response.data.tasks)) {
@@ -62,12 +60,12 @@ router.get('/task',/* authenticate,*/ async (req, res) => {
             await client.query(query, values);
             console.log(`Task ${id} inserted successfully.`);
           } else {
-            // Task already exists, you can choose to update or skip it
-            console.log(`Task ${id} already exists.`);
+            // Task already exists, update it
+            const updateQuery = 'UPDATE tasks SET name = $1, completed = $2, assignees = $3, subscribers = $4, total_subtasks = $5, completed_subtasks = $6, description = $7, due_date = $8, start_date = $9, milestone = $10 WHERE id = $11';
+            const updateValues = [name, completed, assigneesJson, subscribersJson, total_subtasks, completed_subtasks, description, due_date, start_date, milestone, id];
+            await client.query(updateQuery, updateValues);
+            console.log(`Task ${id} updated successfully.`);
           }
-          //Query
-          
-
         }
       } catch (error) {
         console.error('Error inserting data:', error)

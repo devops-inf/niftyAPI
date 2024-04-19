@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.get('/project', async (req, res) => {
   try {
-    // ANifty API endpoint for fetching data
+    // Nifty API endpoint for fetching data
     const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/projects';
 
     // token from the session
