@@ -63,8 +63,11 @@ router.get('/project', async (req, res) => {
             await client.query(query, values);
             console.log(`Project ${id} inserted successfully.`);
         } else {
-            // Project already exists, you can choose to update or skip it
-            console.log(`Project ${id} already exists.`);
+            // Project already exists, update it
+            const query = 'UPDATE projects SET nice_id = $1, name = $2, description = $3, initials = $4, owner = $5, members = $6, progress = $7, email = $8, total_story_points = $9, completed_story_points = $10 WHERE id = $11';
+            const values = [nice_id, name, description, initials, owner, membersJson, progress, email, total_story_points, completed_story_points, id];
+            await client.query(query, values);
+            console.log(`Project ${id} exists and updated successfully.`);
         }
       }
       console.log('Data inserted successfully.');
