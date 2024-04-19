@@ -65,15 +65,11 @@ router.get('/member', async (req, res) => {
               const updateValues = [user_id, email, name, initials, team, role, total_story_points, completed_story_points, id];
               await client.query(updateQuery, updateValues);
               console.log(`Member ${id} updated successfully.`);
-          }
-          
+            }
         }
       }catch (error) {
         console.error('Error inserting data:', error)
       }finally {
-        if (client) {
-            //client.release();
-        }
         await pool.end();
       }
     }
