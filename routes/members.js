@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/member', async (req, res) => {
     try {
   
-      // Assuming the Nifty API endpoint for fetching data
+      // Nifty API endpoint for fetching data
       const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/members';
   
       // Get the token from the session
@@ -60,8 +60,11 @@ router.get('/member', async (req, res) => {
               await client.query(query, values);
               console.log(`Member ${id} inserted successfully.`);
           } else {
-              // Member already exists, you can choose to update or skip it
-              console.log(`Member ${id} already exists.`);
+              // Member already exists, update it
+              const updateQuery = 'UPDATE members SET user_id = $1, email = $2, name = $3, initials = $4, team = $5, role = $6, total_story_points = $7, completed_story_points = $8 WHERE id = $9';
+              const updateValues = [user_id, email, name, initials, team, role, total_story_points, completed_story_points, id];
+              await client.query(updateQuery, updateValues);
+              console.log(`Member ${id} updated successfully.`);
           }
           
         }
