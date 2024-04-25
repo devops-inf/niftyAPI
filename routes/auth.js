@@ -46,7 +46,6 @@ router.get('/callback', (req, res) => {
         redirect_uri: `https://niftypm.com`
     };
     
-
     // Define the headers
     const headers = {
         'Content-Type': 'application/json',
@@ -58,7 +57,7 @@ router.get('/callback', (req, res) => {
         .then(response => {
             console.log('Response:', response.data);
             // Send the access token in the response
-            res.json({ access_token: response.data.access_token });
+            //res.json({ access_token: response.data.access_token });
 
             // Load the .env file
             const envConfig = dotenv.parse(fs.readFileSync('.env'));
@@ -68,6 +67,9 @@ router.get('/callback', (req, res) => {
 
             // Write the modified config back to the .env file
             fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
+
+            // Redirect the user back to the desired URL
+            res.redirect('http://192.168.88.93/auth/');
         })
         .catch(error => {
             console.error('Error:', error);
