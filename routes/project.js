@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/project', async (req, res) => {
   try {
     // Nifty API endpoint for fetching data
-    const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/projects';
+    const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/projects?limit=0';
 
     // token from the session
     const token = process.env.ACCESS_TOKEN;

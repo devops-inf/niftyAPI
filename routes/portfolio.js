@@ -10,7 +10,7 @@ router.get('/portfolio', async (req, res) => {
     try {
   
       // Nifty API endpoint for fetching data
-      const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/subteams';
+      const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/subteams?limit=0';
   
       // Get the token from the session
       const token = process.env.ACCESS_TOKEN;
