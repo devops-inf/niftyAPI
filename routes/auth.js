@@ -69,7 +69,7 @@ router.get('/callback', (req, res) => {
             fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
             // Redirect the user back to the desired URL
-            res.redirect('http://192.168.88.93/auth/');
+            res.redirect('http://192.168.88.93/auth/index');
         })
         .catch(error => {
             console.error('Error:', error);
