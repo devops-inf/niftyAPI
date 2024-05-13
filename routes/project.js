@@ -1,9 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const authenticate = require('../middleware/authenticate');
 const axios = require('axios');
-const pool = require('../DB/pgConnection');
-const client = require('../DB/pgConnection');
+const db = require('../DB/pgConnection');
 const router = express.Router();
 
 router.get('/project', async (req, res) => {
@@ -42,41 +40,72 @@ router.get('/project', async (req, res) => {
     }
  
   // Function to insert project data into the database
-  async function insertProjects(niftyData, res) {
- 
+  async function insertProjects(niftyData) {
     try {
+        // Iterate over each project and insert data
+        for (const project of niftyData.projects) {
+            const { id, nice_id, name, description, initials, owner, members, progress, email } = project;
 
-      // Iterate over each project and insert data
-      for (const projects of niftyData.projects) {
-        const { id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points } = projects;
-        
-        // Convert members array to JSON string
-        const membersJson = JSON.stringify(members);
-        
-        // Check if the project already exists
-        const existingProject = await client.query('SELECT * FROM projects WHERE id = $1', [id]);
+            // Convert members array to JSON string
+            const membersJson = JSON.stringify(members);
 
-        if (existingProject.rows.length === 0) {
-            // Project does not exist, insert it into the database
-            const query = 'INSERT INTO projects (id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
-            const values = [id, nice_id, name, description, initials, owner, membersJson, progress, email, total_story_points, completed_story_points];
-            await client.query(query, values);
-            console.log(`Project ${id} inserted successfully.`);
-        } else {
-            // Project already exists, update it
-            const query = 'UPDATE projects SET nice_id = $1, name = $2, description = $3, initials = $4, owner = $5, members = $6, progress = $7, email = $8, total_story_points = $9, completed_story_points = $10 WHERE id = $11';
-            const values = [nice_id, name, description, initials, owner, membersJson, progress, email, total_story_points, completed_story_points, id];
-            await client.query(query, values);
-            console.log(`Project ${id} exists and updated successfully.`);
+            // Check if the project already exists
+            const existingProject = await db.query('SELECT * FROM project WHERE id = ?', [id]);
+
+            if (existingProject.length === 0) {
+                // Project does not exist, insert it into the database
+                const query = 'INSERT INTO project (id, nice_id, name, description, initials, owner, members, progress, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+                const values = [id, nice_id, name, description, initials, owner, membersJson, progress, email];
+                await db.query(query, values);
+                console.log(`Project ${id} inserted successfully.`);
+            } else {
+                // Project already exists, update it
+                const query = 'UPDATE project SET nice_id = ?, name = ?, description = ?, initials = ?, owner = ?, members = ?, progress = ?, email = ? WHERE id = ?';
+                const values = [nice_id, name, description, initials, owner, membersJson, progress, email, id];
+                await db.query(query, values);
+                console.log(`Project ${id} exists and updated successfully.`);
+            }
         }
-      }
-      console.log('Data inserted successfully.');
-    } catch (err) {
-      console.error('Error inserting data:', err);
-    } finally {
-      await pool.end();
+        console.log('Data inserted successfully.');
+    } catch (error) {
+        console.error('Error inserting data:', error);
     }
-  }
+ }
+  //Postgress Database
+  // async function insertProjects(niftyData, res) {
+ 
+  //   try {
+
+  //     // Iterate over each project and insert data
+  //     for (const projects of niftyData.projects) {
+  //       const { id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points } = projects;
+        
+  //       // Convert members array to JSON string
+  //       const membersJson = JSON.stringify(members);
+        
+  //       // Check if the project already exists
+  //       const existingProject = await client.query('SELECT * FROM projects WHERE id = $1', [id]);
+
+  //       if (existingProject.rows.length === 0) {
+  //           // Project does not exist, insert it into the database
+  //           const query = 'INSERT INTO projects (id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
+  //           const values = [id, nice_id, name, description, initials, owner, membersJson, progress, email, total_story_points, completed_story_points];
+  //           await client.query(query, values);
+  //           console.log(`Project ${id} inserted successfully.`);
+  //       } else {
+  //           // Project already exists, update it
+  //           const query = 'UPDATE projects SET nice_id = $1, name = $2, description = $3, initials = $4, owner = $5, members = $6, progress = $7, email = $8, total_story_points = $9, completed_story_points = $10 WHERE id = $11';
+  //           const values = [nice_id, name, description, initials, owner, membersJson, progress, email, total_story_points, completed_story_points, id];
+  //           await client.query(query, values);
+  //           console.log(`Project ${id} exists and updated successfully.`);
+  //       }
+  //     }
+  //     console.log('Data inserted successfully.');
+  //   } catch (err) {
+  //     console.error('Error inserting data:', err);
+  //   } finally {
+  //     await pool.end();}}
+
 });
 
 module.exports = router;

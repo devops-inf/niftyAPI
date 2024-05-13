@@ -1,6 +1,5 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const authenticate = require('../middleware/authenticate');
 const axios = require('axios');
 const pool = require('../DB/pgConnection');
 const client = require('../DB/pgConnection');

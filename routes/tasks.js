@@ -1,9 +1,6 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const authenticate = require('../middleware/authenticate');
 const axios = require('axios');
-const pool = require('../DB/pgConnection');
-const client = require('../DB/pgConnection');
+const db = require('../DB/pgConnection');
 const router = express.Router();
 
 router.get('/task',/* authenticate,*/ async (req, res) => {
@@ -38,40 +35,71 @@ router.get('/task',/* authenticate,*/ async (req, res) => {
       console.error('Error retrieving data from Nifty:', error);
       res.status(500).json({ message: 'Internal server error' });
     }
-
-    //Inserting data into the database
+    //Inserting data into the mySQL DB
     async function insertTasks(niftyData){
-      try {
-        //iterate over each task and insert data
-        for (const task of niftyData) {
-          const { id, created_at, nice_id, name, completed, project, assignees, subscribers, total_subtasks, completed_subtasks, created_by, description, due_date, start_date, milestone} = task;
-
-          //convert array to JSON string
-          const assigneesJson = JSON.stringify(assignees);
-          const subscribersJson = JSON.stringify(subscribers);
-
-          // Check if the portfolio already exists
-          const existingTasks = await client.query('SELECT * FROM tasks WHERE id = $1', [id]);
-          
-          if (existingTasks.rows.length === 0) {
-            // Task does not exist, insert it into the database
-            const query = 'INSERT INTO tasks (id, created_at, nice_id, name, completed, project, assignees, subscribers, total_subtasks, completed_subtasks, created_by, description, due_date, start_date, milestone) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)'
-            const values = [id, created_at, nice_id, name, completed, project, assigneesJson, subscribersJson, total_subtasks, completed_subtasks, created_by, description, due_date, start_date, milestone];
-            await client.query(query, values);
-            console.log(`Task ${id} inserted successfully.`);
-          } else {
-            // Task already exists, update it
-            const updateQuery = 'UPDATE tasks SET name = $1, completed = $2, assignees = $3, subscribers = $4, total_subtasks = $5, completed_subtasks = $6, description = $7, due_date = $8, start_date = $9, milestone = $10 WHERE id = $11';
-            const updateValues = [name, completed, assigneesJson, subscribersJson, total_subtasks, completed_subtasks, description, due_date, start_date, milestone, id];
-            await client.query(updateQuery, updateValues);
-            console.log(`Task ${id} updated successfully.`);
+        try {
+          //iterate over each task and insert data
+          for (const task of niftyData) {
+            const { id, nice_id, name, completed, project, assignees, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date} = task;
+  
+            //convert array to JSON string
+            const assigneesJson = JSON.stringify(assignees);
+  
+            // Check if the portfolio already exists
+            const existingTasks = await db.query('SELECT * FROM task WHERE id = ?', [id]);
+            
+            if (existingTasks.length === 0) {
+              // Task does not exist, insert it into the database
+              const query = 'INSERT INTO task (id, nice_id, name, completed, project, assignees, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)'
+              const values = [id, nice_id, name, completed, project, assigneesJson, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date];
+              await db.query(query, values);
+              console.log(`Task ${id} inserted successfully.`);
+            } else {
+              // Task already exists, update it
+              const updateQuery = 'UPDATE task SET name = $?, nice_id = ?, completed = ?, project = ?, assignees = ?, total_subtasks = ?, completed_subtasks = ?, created_by = ?, description = ?, milestone = ?, created_at = ?, start_date = ?, due_date = ? WHERE id = ?';
+              const updateValues = [name, nice_id, completed, project, assigneesJson, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date, id];
+              await db.query(updateQuery, updateValues);
+              console.log(`Task ${id} updated successfully.`);
+            }
           }
+        } catch (error) {
+          console.error('Error inserting data:', error)
+          throw error;
         }
-      } catch (error) {
-        console.error('Error inserting data:', error)
-        throw error;
       }
-    }
+    //Inserting data into the Postgress database
+    // async function insertTasks(niftyData){
+    //   try {
+    //     //iterate over each task and insert data
+    //     for (const task of niftyData) {
+    //       const { id, nice_id, name, completed, project, assignees, subscribers, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date} = task;
+
+    //       //convert array to JSON string
+    //       const assigneesJson = JSON.stringify(assignees);
+    //       const subscribersJson = JSON.stringify(subscribers);
+
+    //       // Check if the portfolio already exists
+    //       const existingTasks = await client.query('SELECT * FROM tasks WHERE id = $1', [id]);
+          
+    //       if (existingTasks.rows.length === 0) {
+    //         // Task does not exist, insert it into the database
+    //         const query = 'INSERT INTO tasks (id, nice_id, name, completed, project, assignees, subscribers, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)'
+    //         const values = [id, nice_id, name, completed, project, assignees, subscribers, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date];
+    //         await client.query(query, values);
+    //         console.log(`Task ${id} inserted successfully.`);
+    //       } else {
+    //         // Task already exists, update it
+    //         const updateQuery = 'UPDATE tasks SET name = $1, nice_id = $2, completed = $3, project = $4, assignees = $5, subscribers = $6, total_subtasks = $7, completed_subtasks = $8, created_by = $9, description = $10, milestone = $11, created_at = $12, start_date = $13, due_date = $14 WHERE id = $15';
+    //         const updateValues = [name, nice_id, completed, project, assigneesJson, subscribersJson, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date, id];
+    //         await client.query(updateQuery, updateValues);
+    //         console.log(`Task ${id} updated successfully.`);
+    //       }
+    //     }
+    //   } catch (error) {
+    //     console.error('Error inserting data:', error)
+    //     throw error;
+    //   }
+    // }
   });
   
   module.exports = router;

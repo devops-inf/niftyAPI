@@ -17,7 +17,6 @@ const authorizationEndpoint = process.env.AUTH_URL;
 // Route handler to initiate the OAuth authorization flow
 router.get('/authorize', (req, res) => {
 
-
     // Redirect the user's browser to the authorization URL
     res.redirect(authorizationEndpoint);   
 
@@ -64,6 +63,7 @@ router.get('/callback', (req, res) => {
 
             // Modify the access token value
             envConfig.ACCESS_TOKEN = response.data.access_token;
+            envConfig.REFRESH_TOKEN = response.data.refresh_token;
 
             // Write the modified config back to the .env file
             fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));

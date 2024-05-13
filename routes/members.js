@@ -1,11 +1,8 @@
 
 
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const authenticate = require('../middleware/authenticate');
 const axios = require('axios');
-const pool = require('../DB/pgConnection');
-const client = require('../DB/pgConnection');
+const db = require('../DB/pgConnection');
 const router = express.Router();
 
 router.get('/member', async (req, res) => {
@@ -31,6 +28,7 @@ router.get('/member', async (req, res) => {
       if (niftyData && Array.isArray(niftyData)) {
         // Insert project data into the database
         await insertMembers(niftyData, res);
+
         // Respond with the retrieved data
         res.json(niftyData);
       } else {
@@ -48,29 +46,29 @@ router.get('/member', async (req, res) => {
         //iterate over each task and insert data
         
         for (const member of niftyData) {
-          const { id, user_id, email, name, initials, team, role, total_story_points, completed_story_points} = member;
+          const { id, user_id, email, name, initials, team, role} = member;
 
           // Check if the member already exists
-          const existingMember = await client.query('SELECT * FROM members WHERE id = $1', [id]);
+          const existingMember = await db.query('SELECT * FROM member WHERE id = ?', [id]);
 
-          if (existingMember.rows.length === 0) {
+          if (existingMember.length === 0) {
               // Member does not exist, insert it into the database
-              const query = 'INSERT INTO members (id, user_id, email, name, initials, team, role, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)';
-              const values = [id, user_id, email, name, initials, team, role, total_story_points, completed_story_points];
-              await client.query(query, values);
+              const query = 'INSERT INTO member (id, user_id, email, name, initials, team, role) VALUES ($1, $2, $3, $4, $5, $6, $7)';
+              const values = [id, user_id, email, name, initials, team, role];
+              await db.query(query, values);
               console.log(`Member ${id} inserted successfully.`);
           } else {
               // Member already exists, update it
-              const updateQuery = 'UPDATE members SET user_id = $1, email = $2, name = $3, initials = $4, team = $5, role = $6, total_story_points = $7, completed_story_points = $8 WHERE id = $9';
-              const updateValues = [user_id, email, name, initials, team, role, total_story_points, completed_story_points, id];
-              await client.query(updateQuery, updateValues);
+              const updateQuery = 'UPDATE member SET user_id = ?, email = ?, name = ?, initials = ?, team = ?, role = ? WHERE id = ?';
+              const updateValues = [user_id, email, name, initials, team, role, id];
+              await db.query(updateQuery, updateValues);
               console.log(`Member ${id} updated successfully.`);
             }
         }
       }catch (error) {
         console.error('Error inserting data:', error)
       }finally {
-        await pool.end();
+        await db.end();
       }
     }
   });
