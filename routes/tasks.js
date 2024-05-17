@@ -56,10 +56,18 @@ router.get('/task',/* authenticate,*/ async (req, res) => {
               console.log(`Task ${id} inserted successfully.`);
             } else {
               // Task already exists, update it
-              const updateQuery = 'UPDATE task SET name = $?, nice_id = ?, completed = ?, project = ?, assignees = ?, total_subtasks = ?, completed_subtasks = ?, created_by = ?, description = ?, milestone = ?, created_at = ?, start_date = ?, due_date = ? WHERE id = ?';
+              const updateQuery = 'UPDATE task SET name = ?, nice_id = ?, completed = ?, project = ?, assignees = ?, total_subtasks = ?, completed_subtasks = ?, created_by = ?, description = ?, milestone = ?, created_at = ?, start_date = ?, due_date = ? WHERE id = ?';
               const updateValues = [name, nice_id, completed, project, assigneesJson, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date, id];
               await db.query(updateQuery, updateValues);
               console.log(`Task ${id} updated successfully.`);
+            }
+
+            // Insert task assignees
+            for (const assignee of assignees) {
+              const assigneeInsertQuery = 'INSERT INTO Task_Assignees (task_id, member_id) VALUES (?, ?)';
+              const assigneeInsertValues = [id, assignee];
+              await db.query(assigneeInsertQuery, assigneeInsertValues);
+              console.log(`Assigned ${assignee} to Task ${id}.`);
             }
           }
         } catch (error) {

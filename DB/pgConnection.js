@@ -20,36 +20,37 @@
 
 const mysql = require('mysql');
 
+// Create a connection to the database
 const db = mysql.createConnection({
     host: 'rs19.cphost.co.za',
     user: 'infini13_kabelo',
-    password: 'Wf#R@?FYUEf[',
-    database: 'infini13_niftydb'
+    password: 'O]hCmzCIkz5H',
+    database: 'infini13_infini13_niftydb'
 });
 
-db.connect(function(error,res){
-    if (!!error) {
-        console.log('Error');
-       
-        res.json({code : 100, status : "Error in connection database"});
-		return;
+// Connect to the database
+db.connect(function(error) {
+    if (error) {
+        console.error('Error connecting to the database:', error);
+        return;
     } else {
         console.log('Connected to the database');
         
-        // db.query('SELECT * FROM projects', function(queryError, results, fields) {
-        //     if (queryError) {
-        //         console.error('Error executing query:', queryError);
-        //         return;
-        //     }
-    
-        //     // Log the results
-        //     console.log('Data fetched from the projects table:', results);
-        // });
+        // Query the database
+        db.query('SELECT * FROM member', function(queryError, results, fields) {
+            if (queryError) {
+                console.error('Error executing query:', queryError);
+                return;
+            }
+
+            // Log the results
+            console.log('Data fetched from the member table:', results);
+        });
     }
 });
 
+module.exports = db;
 
-module.exports=db;
 
 
 
