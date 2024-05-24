@@ -1,111 +1,69 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
 const axios = require('axios');
 const db = require('../DB/pgConnection');
 const router = express.Router();
 
 router.get('/project', async (req, res) => {
   try {
-    // Nifty API endpoint for fetching data
     const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/projects?limit=0';
-
-    // token from the session
     const token = process.env.ACCESS_TOKEN;
 
-    //GET request to the Nifty API
     const response = await axios.get(niftyApiUrl, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
     });
 
-    // Checks if response data contains projects
     if (!response.data || !response.data.projects || !Array.isArray(response.data.projects)) {
       throw new Error('Invalid response data format');
     }
-    
-    // Process the response from the Nifty API
-    const niftyData = response.data;
 
-    //A call function to Insert project data into the database
-    await insertProjects(niftyData, response);
-    
-    // Respond with the retrieved data
+    const niftyData = response.data;
+    await insertProjects(niftyData);
+
     res.json(niftyData);
 
   } catch (error) {
-      // Handle errors
-      console.error('Error retrieving and inserting data:', error);
-      res.status(500).json({ message: 'Internal server error' });
-    }
- 
+    console.error('Error retrieving and inserting data:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+
+  async function queryAsync(query, values) {
+    return new Promise((resolve, reject) => {
+      db.query(query, values, (error, results) => {
+        if (error) {
+          return reject(error);
+        }
+        resolve(results);
+      });
+    });
+  }
   // Function to insert project data into the database
   async function insertProjects(niftyData) {
     try {
-        // Iterate over each project and insert data
-        for (const project of niftyData.projects) {
-            const { id, nice_id, name, description, initials, owner, members, progress, email } = project;
+      for (const project of niftyData.projects) {
+        const { id, nice_id, name, description, initials, owner, members, progress, email } = project;
 
-            // Convert members array to JSON string
-            const membersJson = JSON.stringify(members);
+        const membersJson = JSON.stringify(members);
 
-            // Check if the project already exists
-            const existingProject = await db.query('SELECT * FROM project WHERE id = ?', [id]);
+        const existingProject = await queryAsync('SELECT * FROM project WHERE id = ?', [id]);
 
-            if (existingProject.length === 0) {
-                // Project does not exist, insert it into the database
-                const query = 'INSERT INTO project (id, nice_id, name, description, initials, owner, members, progress, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
-                const values = [id, nice_id, name, description, initials, owner, membersJson, progress, email];
-                await db.query(query, values);
-                console.log(`Project ${id} inserted successfully.`);
-            } else {
-                // Project already exists, update it
-                const query = 'UPDATE project SET nice_id = ?, name = ?, description = ?, initials = ?, owner = ?, members = ?, progress = ?, email = ? WHERE id = ?';
-                const values = [nice_id, name, description, initials, owner, membersJson, progress, email, id];
-                await db.query(query, values);
-                console.log(`Project ${id} exists and updated successfully.`);
-            }
+        if (existingProject.length === 0) {
+          const query = 'INSERT INTO project (id, nice_id, name, description, initials, owner, members, progress, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)';
+          const values = [id, nice_id, name, description, initials, owner, membersJson, progress, email];
+          await queryAsync(query, values);
+          console.log(`Project ${id} inserted successfully.`);
+        } else {
+          const updateQuery = 'UPDATE project SET nice_id = ?, name = ?, description = ?, initials = ?, owner = ?, members = ?, progress = ?, email = ? WHERE id = ?';
+          const updateValues = [nice_id, name, description, initials, owner, membersJson, progress, email, id];
+          await queryAsync(updateQuery, updateValues);
+          console.log(`Project ${id} updated successfully.`);
         }
-        console.log('Data inserted successfully.');
+      }
     } catch (error) {
-        console.error('Error inserting data:', error);
+      console.error('Error inserting project:', error);
     }
- }
-  //Postgress Database
-  // async function insertProjects(niftyData, res) {
- 
-  //   try {
-
-  //     // Iterate over each project and insert data
-  //     for (const projects of niftyData.projects) {
-  //       const { id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points } = projects;
-        
-  //       // Convert members array to JSON string
-  //       const membersJson = JSON.stringify(members);
-        
-  //       // Check if the project already exists
-  //       const existingProject = await client.query('SELECT * FROM projects WHERE id = $1', [id]);
-
-  //       if (existingProject.rows.length === 0) {
-  //           // Project does not exist, insert it into the database
-  //           const query = 'INSERT INTO projects (id, nice_id, name, description, initials, owner, members, progress, email, total_story_points, completed_story_points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)';
-  //           const values = [id, nice_id, name, description, initials, owner, membersJson, progress, email, total_story_points, completed_story_points];
-  //           await client.query(query, values);
-  //           console.log(`Project ${id} inserted successfully.`);
-  //       } else {
-  //           // Project already exists, update it
-  //           const query = 'UPDATE projects SET nice_id = $1, name = $2, description = $3, initials = $4, owner = $5, members = $6, progress = $7, email = $8, total_story_points = $9, completed_story_points = $10 WHERE id = $11';
-  //           const values = [nice_id, name, description, initials, owner, membersJson, progress, email, total_story_points, completed_story_points, id];
-  //           await client.query(query, values);
-  //           console.log(`Project ${id} exists and updated successfully.`);
-  //       }
-  //     }
-  //     console.log('Data inserted successfully.');
-  //   } catch (err) {
-  //     console.error('Error inserting data:', err);
-  //   } finally {
-  //     await pool.end();}}
-
+  }
 });
 
 module.exports = router;

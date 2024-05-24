@@ -20,13 +20,20 @@
 
 const mysql = require('mysql');
 
-// Create a connection to the database
+//Create a connection to the database
 const db = mysql.createConnection({
     host: 'rs19.cphost.co.za',
     user: 'infini13_kabelo',
     password: 'O]hCmzCIkz5H',
     database: 'infini13_infini13_niftydb'
 });
+
+// const db = mysql.createConnection({
+//     host: '127.0.0.1',
+//     user: 'root',
+//     password: '',
+//     database: 'infini13_infini13_niftydb'
+// });
 
 // Connect to the database
 db.connect(function(error) {
@@ -36,16 +43,12 @@ db.connect(function(error) {
     } else {
         console.log('Connected to the database');
         
-        // Query the database
-        db.query('SELECT * FROM member', function(queryError, results, fields) {
-            if (queryError) {
-                console.error('Error executing query:', queryError);
-                return;
-            }
-
-            // Log the results
-            console.log('Data fetched from the member table:', results);
-        });
+        //Query the database
+        
+        // const query = 'INSERT INTO member (id, user_id, email, name, initials, team, role) VALUES (?, ?, ?, ?, ?, ?, ?)';
+        // const values = ['GFYBVBVRV', 'HJBVSB', 'DVBJH', 'FVGHVUYV', 'HJB', 'IT', 'REGULAR'];
+        // db.query(query, values);
+        
     }
 });
 

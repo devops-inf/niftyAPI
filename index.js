@@ -3,6 +3,12 @@ const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const bodyParser =  require('body-parser');
+const NodeCache = require("node-cache");
+const myCache = new NodeCache();
+
+// Clear the cache
+myCache.flushAll();
+console.log("Cache cleared");
 
 const app = express();
 
