@@ -38,6 +38,7 @@ app.use('/api', require('./routes/message'));
 app.use('/api', require('./routes/milestone'));
 app.use('/api', require('./routes/status'));
 app.use('/api', require('./routes/document'));
+app.use('/api', require('./routes/subtasks'));
 
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
