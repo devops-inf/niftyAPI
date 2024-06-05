@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const client = require('../DB/pgConnection');
+const client = require('../DB/sqlConnection');
 const router = express.Router();
 
 router.get('/status', async (req, res) => {

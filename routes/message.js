@@ -1,8 +1,8 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
-const pool = require('../DB/pgConnection');
-const client = require('../DB/pgConnection');
+const pool = require('../DB/sqlConnection');
+const client = require('../DB/sqlConnection');
 const router = express.Router();
 
 router.get('/message', async (req, res) => {

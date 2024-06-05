@@ -1,13 +1,16 @@
 const express = require('express');
 const axios = require('axios');
-const db = require('../DB/pgConnection');
+const pool = require('../DB/sqlConnection');
 const router = express.Router();
-const { tokenRefreshMiddleware } = require('../middleware/refresh');
+const tokenRefreshMiddleware = require('../middleware/refresh');
+const tokenStore = require('../middleware/tokenStore'); 
 
-router.get('/portfolio', /* tokenRefreshMiddleware, */ async (req, res) => {
+router.get('/portfolio', tokenRefreshMiddleware, async (req, res) => {
   try {
     const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/subteams?limit=0';
-    const token = process.env.ACCESS_TOKEN;
+    
+    // Use the latest access token from tokenStore
+    const token = tokenStore.accessToken;
 
     const response = await axios.get(niftyApiUrl, {
       headers: {
@@ -29,8 +32,12 @@ router.get('/portfolio', /* tokenRefreshMiddleware, */ async (req, res) => {
   }
 });
 
+
 async function insertPortfolio(niftyData) {
+  let connection;
   try {
+    connection = await pool.getConnection();
+
     for (const subteam of niftyData) {
       const {
         id = null,
@@ -42,38 +49,29 @@ async function insertPortfolio(niftyData) {
 
       const membersJson = JSON.stringify(members);
 
-      const result = await db.query('SELECT * FROM portfolio WHERE id = ?', [id]);
+      const [result] = await connection.execute('SELECT * FROM portfolio WHERE id = ?', [id]);
 
-      // Check if result is not null and has length greater than 0
       if (result && result.length > 0) {
-        const existingPortfolio = result[0]; // Access the first row of the result
-        // Now you can safely access the 'rows' property
-        if (existingPortfolio.rows.length === 0) {
-          // Insert new portfolio
-          const query = 'INSERT INTO portfolio (id, name, initials, owner, members) VALUES (?, ?, ?, ?, ?)';
-          const values = [id, name, initials, owner, membersJson];
-          await db.query(query, values);
-          console.log(`Portfolio ${id} inserted successfully.`);
-        } else {
-          // Update existing portfolio
-          const updateQuery = 'UPDATE portfolio SET name = ?, initials = ?, owner = ?, members = ? WHERE id = ?';
-          const updateValues = [name, initials, owner, membersJson, id];
-          await db.query(updateQuery, updateValues);
-          console.log(`Portfolio ${id} updated successfully.`);
-        }
+        // Portfolio exists, update it
+        const updateQuery = 'UPDATE portfolio SET name = ?, initials = ?, owner = ?, members = ? WHERE id = ?';
+        const updateValues = [name, initials, owner, membersJson, id];
+        await connection.execute(updateQuery, updateValues);
+        console.log(`Portfolio ${id} updated successfully.`);
       } else {
-        console.log(`No portfolio found with id ${id}. Inserting as a new portfolio.`);
-        // Insert new portfolio since no existing portfolio found
+        // Insert new portfolio
         const query = 'INSERT INTO portfolio (id, name, initials, owner, members) VALUES (?, ?, ?, ?, ?)';
         const values = [id, name, initials, owner, membersJson];
-        await db.query(query, values);
+        await connection.execute(query, values);
         console.log(`Portfolio ${id} inserted successfully.`);
       }
     }
   } catch (error) {
     console.error('Error inserting data: ', error);
+  } finally {
+    if (connection) {
+      connection.release();
+    }
   }
 }
-
 
 module.exports = router;

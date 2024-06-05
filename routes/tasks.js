@@ -1,26 +1,27 @@
 const express = require('express');
 const axios = require('axios');
-const mysql = require('mysql2/promise'); // Use mysql2/promise for async/await support
+const pool = require('../DB/sqlConnection'); // Use connection pool
+const tokenRefreshMiddleware = require('../middleware/refresh');
+const tokenStore = require('../middleware/tokenStore');
 const router = express.Router();
 
-// Database connection setup
-const dbConfig = {
-  host: 'rs19.cphost.co.za',
-  user: 'infini13_kabelo',
-  password: 'O]hCmzCIkz5H',
-  database: 'infini13_infini13_niftydb'
-};
-
-// Function to create a new connection
-async function createDbConnection() {
-  const connection = await mysql.createConnection(dbConfig);
-  return connection;
+// Retry function
+async function withRetry(fn, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      if (i === retries - 1) throw error;
+      console.error(`Retrying... (${i + 1}/${retries})`);
+      await new Promise(res => setTimeout(res, 1000)); // Wait 1 second before retrying
+    }
+  }
 }
 
-router.get('/task', /* authenticate, */ async (req, res) => {
+router.get('/task', tokenRefreshMiddleware, async (req, res) => {
   try {
     const niftyApiUrl = 'https://openapi.niftypm.com/api/v1.0/tasks?limit=0';
-    const token = process.env.ACCESS_TOKEN;
+    const token = tokenStore.accessToken;
 
     const response = await axios.get(niftyApiUrl, {
       headers: {
@@ -33,7 +34,7 @@ router.get('/task', /* authenticate, */ async (req, res) => {
     }
 
     const niftyData = response.data.tasks;
-    await insertTasks(niftyData);
+    await withRetry(() => insertTasks(niftyData, token));
 
     res.json(niftyData);
   } catch (error) {
@@ -45,14 +46,15 @@ router.get('/task', /* authenticate, */ async (req, res) => {
 async function insertTasks(niftyData) {
   let connection;
   try {
-    connection = await createDbConnection();
+    connection = await pool.getConnection();
 
     for (const task of niftyData) {
       const {
         id = null,
-        nice_id = null,
         name = null,
         completed = null,
+        completed_on = null,
+        completed_by = null,
         project = null,
         assignees = [],
         total_subtasks = null,
@@ -72,13 +74,13 @@ async function insertTasks(niftyData) {
       const [existingTasks] = await connection.execute('SELECT * FROM task WHERE id = ?', [id]);
 
       if (existingTasks.length === 0) {
-        const query = 'INSERT INTO task (id, nice_id, name, completed, project, assignees, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-        const values = [id, nice_id, name, completed, project, assigneesJson, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date];
+        const query = 'INSERT INTO task (id, name, completed, completed_on, completed_by, project, assignees, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        const values = [id, name, completed, completed_on, completed_by, project, assigneesJson, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date];
         await connection.execute(query, values);
         console.log(`Task ${id} inserted successfully.`);
       } else {
-        const updateQuery = 'UPDATE task SET nice_id = ?, name = ?, completed = ?, project = ?, assignees = ?, total_subtasks = ?, completed_subtasks = ?, created_by = ?, description = ?, milestone = ?, created_at = ?, start_date = ?, due_date = ? WHERE id = ?';
-        const updateValues = [nice_id, name, completed, project, assigneesJson, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date, id];
+        const updateQuery = 'UPDATE task SET name = ?, completed = ?, completed_on = ?, completed_by = ?, project = ?, assignees = ?, total_subtasks = ?, completed_subtasks = ?, created_by = ?, description = ?, milestone = ?, created_at = ?, start_date = ?, due_date = ? WHERE id = ?';
+        const updateValues =  [name, completed, completed_on, completed_by, project, assigneesJson, total_subtasks, completed_subtasks, created_by, description, milestone, created_at, start_date, due_date, id];
         await connection.execute(updateQuery, updateValues);
         console.log(`Task ${id} updated successfully.`);
       }
@@ -88,7 +90,7 @@ async function insertTasks(niftyData) {
     throw error;
   } finally {
     if (connection) {
-      await connection.end();
+      connection.release();
     }
   }
 }
