@@ -64,12 +64,13 @@ router.get('/callback', (req, res) => {
             // Modify the access token value
             envConfig.ACCESS_TOKEN = response.data.access_token;
             envConfig.REFRESH_TOKEN = response.data.refresh_token;
+            envConfig.AUTH_CODE = authorizationCode;
 
             // Write the modified config back to the .env file
             fs.writeFileSync('.env', Object.keys(envConfig).map(key => `${key}=${envConfig[key]}`).join('\n'));
 
             // Redirect the user back to the desired URL
-            res.redirect('http://192.168.88.93/auth/index');
+            res.redirect('https://niftyapp.infinitybrands.co.za/auth/index');
         })
         .catch(error => {
             console.error('Error:', error);
